@@ -1,7 +1,150 @@
 package matrix;
 
-interface MatrixUtils {
-    public static Matrix addition(Matrix matrix1, Matrix matrix2) {
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+public interface MatrixUtils {
+    static Float[] toFloatArray(float[] floats){
+        Float[] floats1 = new Float[floats.length];
+        for (int i = 0; i < floats.length; i++) {
+            floats1[i] = floats[i];
+        }
+        return floats1;
+    }
+
+    static Double sumToDouble(Number... numbers) {
+        double doubleSum = 0;
+
+        for (Number number : numbers) {
+            doubleSum += number.doubleValue();
+        }
+        return doubleSum;
+    }
+
+    static Double multiplyToDouble(Number... numbers){
+        double doubleMultiply = 1;
+
+        for (Number number : numbers) {
+            doubleMultiply*=number.doubleValue();
+        }
+        return doubleMultiply;
+    }
+
+    public static <T extends Number> Matrix<T> addition(Matrix<T> matrix1, Matrix<T> matrix2) {
+        checkMatrices(matrix1, matrix2);
+        List<T> valuesOfMatrix1 = matrix1.getValues();
+        List<T> valuesOfMatrix2 = matrix2.getValues();
+        List<T> newMatrix = new LinkedList<>();
+        for (int i = 0; i < valuesOfMatrix1.size(); i++) {
+            //todo it's really awful but i don't know how to do it better.
+            //I need to be sure about T parameters are the same for both matrices
+            newMatrix.add((T) sumToDouble(valuesOfMatrix1.get(i), valuesOfMatrix2.get(i)));
+//            newMatrix.add((T) Double.valueOf(valuesOfMatrix1.get(i).doubleValue() + valuesOfMatrix2.get(i).doubleValue()));
+        }
+
+        return new Matrix<>(newMatrix, matrix1.getRows(), matrix1.getCols());
+    }
+
+
+    public static <T extends Number> Matrix<T> subtraction(Matrix<T> matrix1, Matrix<T> matrix2) {
+        checkMatrices(matrix1, matrix2);
+        List<T> matrix1F = matrix1.getValues();
+        List<T> matrix2F = matrix2.getValues();
+        List<T> newMatrix = new LinkedList<>();
+
+        for (int i = 0; i < matrix1F.size(); i++) {
+            //todo it's really awful but i don't know how to do it better.
+            //I need to be sure about T parameters are the same for both matrices
+            newMatrix.add((T) Double.valueOf(matrix1F.get(i).doubleValue() - matrix2F.get(i).doubleValue()));
+        }
+
+        return new Matrix<>(newMatrix, matrix1.getRows(), matrix1.getCols());
+    }
+
+    public static <T extends Number> Matrix<T> multiplication(Matrix<T> matrix, T c) {
+        List<T> matrix1F = matrix.getValues();
+        List<T> newMatrix = new LinkedList<>();
+        for (T number : matrix1F) {
+            newMatrix.add((T) multiplyToDouble(c,  number));
+        }
+
+        return new Matrix<>(newMatrix, matrix.getRows(), matrix.getCols());
+    }
+
+    public static <T extends Number> Matrix<T> multiplication(Matrix<T> matrix1, Matrix<T> matrix2) {
+        if (matrix1 == null || matrix2 == null) {
+            throw new MatrixException("Matrix is null");
+        }
+        if (matrix1.getCols() != matrix2.getRows()) {
+            throw new MatrixException("Width of the first matrix isn't equal to the height of the second one");
+        }
+
+        List<T> matrix1F = matrix1.getValues();
+        List<T> matrix2F = matrix2.getValues();
+        List<T> newMatrix = new LinkedList<>();
+
+//
+        for (int i = 0; i < matrix1.getRows() * matrix2.getCols(); i++) {
+            double value = 0.0;
+            for (int j = 0; j < matrix1.getCols(); j++) {
+                value += matrix1F.get(i * matrix1.getCols() + j).doubleValue() * matrix2F.get(j * matrix2.getRows() + i).doubleValue();
+            }
+            newMatrix.add((T) Double.valueOf(value));
+        }
+
+        return new Matrix<>(newMatrix, matrix1.getRows(), matrix2.getCols());
+    }
+
+    static<T extends Number> void checkMatrices(Matrix<T> matrix1, Matrix<T> matrix2) {
+        //переименовать метод и разделить проверки
+        if (matrix1 == null || matrix2 == null) {
+            throw new MatrixException("Matrix is null");
+        }
+        if (matrix1.getRows() != matrix2.getRows() || matrix1.getCols() != matrix2.getCols()) {
+            throw new MatrixException("length of the matrices aren't equal");
+        }
+    }
+
+    public static<T extends Number> Matrix<T> transposition(Matrix<T> matrix){
+        //todo check matrix
+        List<T> matrix1 = matrix.getValues();
+        List<T> newMatrix = new ArrayList<>();
+        //getCols
+        float tmp;
+        int rows = matrix.getRows();
+        int cols = matrix.getCols();
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++)
+            {
+                //if matrix doesn't have value there. It's related only to vectors like:
+                // v1 = (1,1,1); after transpose it must be:
+                //      (1)
+                //v1 =  (1)
+                //      (1)
+                if (matrix.getCols()* col + row >= matrix.values.size()){
+
+                    if(rows == 1){ //this check is unnecessary. So I did it because I can
+                        rows =  cols;
+                        cols = 1;
+                        setElement(newMatrix,cols,col,row,matrix.getElement(row,col));
+                    }
+                    continue;
+                }
+                setElement(newMatrix,cols,row,col,matrix.getElement(col,row));
+            }
+        }
+        return new Matrix<>(newMatrix,rows,cols);
+    }
+    static <T extends Number> void setElement(List<T> values, int width, int row, int col, T value) {
+        //todo exception if size < width * row + col
+        if (width*row + col != values.size()-1){
+            values.add(value);
+        }
+        values.set(width * row + col, value);
+    }
+    /*public static Matrix addition(Matrix matrix1, Matrix matrix2) {
         checkMatrices(matrix1,matrix2);
         float[] matrix1F = matrix1.getMatrix();
         float[] matrix2F = matrix2.getMatrix();
@@ -35,8 +178,8 @@ interface MatrixUtils {
         return new Matrix(newMatrix,matrix.getRows(), matrix.getCols());
     }
 
-    /*static Matrix multiply(Matrix matrix, Vector v){
-    }*/
+    *//*static Matrix multiply(Matrix matrix, Vector v){
+    }*//*
     public static Matrix multiplication(Matrix matrix1, Matrix matrix2){
         if(matrix1 == null || matrix2 == null ){
             throw new MatrixException("Matrix is null");
@@ -59,9 +202,10 @@ interface MatrixUtils {
     }
 
 
-    public static Matrix transposition(Matrix matrix){
-        float[] matrix1F = matrix.getMatrix();
-        float[] newMatrix = new float[matrix.getCols()];
+    public static<T extends Number> Matrix<T> transposition(Matrix<T> matrix){
+        List<T> matrix1 = matrix.getMatrix();
+        List<T> newMatrix = new ArrayList<>();
+        //getCols
         float tmp;
         for (int row = 0; row < matrix.getRows(); row++) {
             for (int col = 0; col < matrix.getCols(); col++)
@@ -69,11 +213,11 @@ interface MatrixUtils {
                 setElement(newMatrix,matrix.getCols(),row,col,matrix.getElement(col,row));
             }
         }
-        return new Matrix(matrix.getMatrix(),matrix.getRows(),matrix.getCols());
+        return new Matrix<>(matrix.getMatrix(),matrix.getRows(),matrix.getCols());
     }
 
-    static void setElement(float[] matrix,int width, int row,int col,float value){
-        matrix[width*row + col] = value;
+    static<T extends Number> void setElement(List<T> matrix, int width, int row, int col, T value){
+        matrix.set(width*row + col,value);
     }
 
 
@@ -86,5 +230,5 @@ interface MatrixUtils {
         if (matrix1.getRows() != matrix2.getRows() || matrix1.getCols() != matrix2.getCols()) {
             throw new MatrixException("length of the matrices aren't equal");
         }
-    }
+    }*/
 }
